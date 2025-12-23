@@ -9,27 +9,6 @@ A Speech-to-Text model for medical Vietnamese audio.
 *   `README.md` – This file you are reading
 *   `sample.wav` - A sample audio for testing
 
-## Setup Guide
-### 1. Create an Environment (Choose one)
-
-**Option A: Using Conda**
-
-```bash
-conda create -n <env-name> python=3.10 -y
-conda activate <env-name>
-```
-
-**Option B: Using Venv**# MediVoice
-
-A Speech-to-Text model for medical Vietnamese audio.
-
-## Files
-
-*   `main.py` – The script to run inference on audio files
-*   `requirements.txt` – Needed library dependencies
-*   `README.md` – This file you are reading
-*   `sample.wav` - A sample audio for testing
-
 
 ## Setup Guide
 
