@@ -1,4 +1,9 @@
 /whisper_model_local
+
 config.py
 test.py
+
+.env
+
 result.csv
+sample1.wav

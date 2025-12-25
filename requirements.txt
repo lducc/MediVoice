@@ -1,6 +1,18 @@
+# AI
 torch
 transformers
 huggingface_hub
 accelerate
+
+# Audio
 librosa
 soundfile
+
+# Server
+fastapi
+uvicorn
+python-multipart
+
+# Utils
+openai
+python-dotenv
