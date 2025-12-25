@@ -15,8 +15,8 @@ A Speech-to-Text model for medical Vietnamese audio, currently configured with F
 First, clone the repository and enter the directory:
 
 ```bash
-git clone https://github.com/your-username/MediFlow.git
-cd MediFlow
+git clone https://github.com/lducc/MediVoice.git
+cd MediVoice
 ```
 
 ### 1. Create Environment (Python 3.10.19)
