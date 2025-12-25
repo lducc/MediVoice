@@ -1,6 +1,6 @@
 # MediVoice
 
-A Speech-to-Text model for medical Vietnamese audio.
+A Speech-to-Text model for medical Vietnamese audio, currently configured with FastAPI and OpenAI for language processing.
 
 ## Files
 
@@ -8,7 +8,7 @@ A Speech-to-Text model for medical Vietnamese audio.
 *   `requirements.txt` – Needed library dependencies
 *   `README.md` – This file you are reading
 *   `sample.wav` - A sample audio for testing
-
+*   `.env` – Configuration file for API Keys
 
 ## Setup Guide
 
@@ -19,13 +19,13 @@ git clone https://github.com/your-username/MediFlow.git
 cd MediFlow
 ```
 
-### 1. Create an Environment (Choose one)
+### 1. Create Environment (Python 3.10.19)
 
 **Option A: Using Conda**
 
 ```bash
-conda create -n <env-name> python=3.10 -y
-conda activate <env-name>
+conda create -n medivoice python=3.10
+conda activate medivoice
 ```
 
 **Option B: Using Venv**
@@ -37,40 +37,52 @@ python -m venv venv
 # Mac/Linux:
     source venv/bin/activate
 ```
+
 ---
 
 ### 2. Install Requirements
 
-Install the dependencies:
-```bash
-pip install -r requirements.txt
-```
-> *Note:*
-> The default `pip install -r requirements.txt` might install the CPU version of PyTorch. If you have an NVIDIA GPU that supports CUDA, run this:
+> **GPU Note:**
+> The default command might install the CPU version of PyTorch. If you have an NVIDIA GPU (RTX 3050, etc.), run this **before** installing requirements:
 >
 > ```bash
 > pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 > ```
 
+Install the dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 3. Configure API Keys
+
+Create a file named `.env` in the project root and add your OpenAI Key:
+
+```env
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
 ---
 
 ## How to Run
 
-Run the script through the cmd (**Must have 2 parameters: the main.py file + the audio file you choose earlier**):
-
-**Option 1: File in the same folder**
+Start the server:
 
 ```bash
-python main.py sample.wav
+python main.py
 ```
 
-**Option 2: Full file path**
+The server will start at: `http://localhost:8000`
 
-```bash
-python main.py "C:\Users\Doctor\Documents\Recordings\patient_01.wav"
-```
+### How to Test (Swagger UI)
 
-*Note:* The first time you run this, it will automatically download the ~1GB model. Runs after it will be instant.
+1.  Open your browser to: **[http://localhost:8000/docs](http://localhost:8000/docs)**
+2.  Click on the green **`POST /analyze`** bar.
+3.  Click **Try it out**.
+4.  Upload `sample.wav` in the **file** field.
+5.  Click **Execute**.
 
-
+*Note: The first run will automatically download the ~1GB model. Subsequent runs will be instant.*
 
