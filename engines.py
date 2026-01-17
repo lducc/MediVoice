@@ -211,6 +211,3 @@ class ASR:
             
         return final_segments
 
-vad_engine = VAD()
-asr_engine = ASR()
-diarization_engine = DiarizationEngine()
