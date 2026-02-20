@@ -5,6 +5,7 @@ model
 model-ct2
 benchmark.py
 convert_model.py
+upload_model.py
 temp.py
 sample_*
 *.wav
