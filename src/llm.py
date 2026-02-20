@@ -1,9 +1,8 @@
 import json
 from typing import Dict, Any
 from openai import OpenAI
-import configs
+from . import configs
 
-# Groq — OpenAI-compatible API, fast LPU inference
 client = OpenAI(
     api_key=configs.GROQ_KEY,
     base_url="https://api.groq.com/openai/v1"

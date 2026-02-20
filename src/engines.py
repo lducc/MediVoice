@@ -15,7 +15,7 @@ def _patched_hf_download(*args, **kwargs):
 huggingface_hub.hf_hub_download = _patched_hf_download
 
 from pyannote.audio import Pipeline
-import configs
+from . import configs
 
 # Suppress warnings
 warnings.filterwarnings("ignore", message=".*TensorFloat-32.*")

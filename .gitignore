@@ -9,3 +9,4 @@ upload_model.py
 temp.py
 sample_*
 *.wav
+src/__pycache__

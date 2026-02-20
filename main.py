@@ -4,10 +4,10 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 import torch, gc
 import gradio as gr
-import configs
-import audio as audio_utils
-from engines import ASR, DiarizationEngine
-from llm import extract_medical_data
+from src import configs
+from src import audio as audio_utils
+from src.engines import ASR, DiarizationEngine
+from src.llm import extract_medical_data
 
 asr_engine = ASR()
 diarization_engine = DiarizationEngine()
@@ -149,12 +149,11 @@ def gradio_extract_emr(transcript):
     if not transcript or not transcript.strip():
         return "Please provide a transcript first."
     
-    from llm import extract_medical_data
     result = extract_medical_data(transcript=transcript)
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
-with gr.Blocks(title="MediVoice", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="MediVoice") as demo:
     gr.Markdown("# 🩺 MediVoice\nVietnamese medical speech-to-text and EMR extraction")
     
     with gr.Tab("Speech to Text"):

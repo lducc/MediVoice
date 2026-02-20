@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install PyTorch first (CPU for HF Spaces free tier, GPU users override via requirements)
+# Install PyTorch first
 RUN pip install --no-cache-dir \
     torch==2.6.0 torchaudio==2.6.0 --extra-index-url https://download.pytorch.org/whl/cpu
 
@@ -19,7 +19,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
-COPY configs.py engines.py audio.py llm.py main.py ./
+COPY main.py ./
+COPY src/ ./src/
 
 # HF Spaces uses port 7860
 ENV PORT=7860
