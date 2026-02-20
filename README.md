@@ -1,3 +1,11 @@
+---
+title: MediVoice
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+---
+
 # MediVoice API
 
 MediVoice is a medical voice transcription system with speaker diarization and LLM-assisted Electronic Medical Record (EMR) extraction. It converts doctor-patient conversations into structured medical data using state-of-the-art AI models.

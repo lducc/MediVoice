@@ -7,3 +7,4 @@ benchmark.py
 convert_model.py
 temp.py
 sample_*
+*.wav
