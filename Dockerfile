@@ -12,7 +12,7 @@ WORKDIR /app
 
 # Install PyTorch first (CPU for HF Spaces free tier, GPU users override via requirements)
 RUN pip install --no-cache-dir \
-    torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+    torch==2.6.0 torchaudio==2.6.0 --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining deps
 COPY requirements.txt .
