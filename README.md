@@ -10,12 +10,34 @@ app_port: 7860
 
 MediVoice is a medical voice transcription system with speaker diarization and LLM-assisted Electronic Medical Record (EMR) extraction. It converts doctor-patient conversations into structured medical data using state-of-the-art AI models.
 
+**[Try it live on HuggingFace Spaces →](https://huggingface.co/spaces/lducc/MediVoice)**
+
 ## Features
 
 - **Audio Transcription**: Converts audio to text using faster-whisper (Vietnamese language)
 - **Speaker Diarization**: Identifies and separates different speakers (doctor vs patient)
 - **EMR Extraction**: Automatically extracts structured medical data from conversations using LLM
 - **Fast Processing**: GPU-accelerated with batched inference (CTranslate2)
+- **Interactive UI**: Built-in Gradio interface for easy interaction
+- **REST API**: FastAPI endpoints for programmatic access
+
+## Demo
+
+The app provides a Gradio web interface with two tabs:
+
+| Tab | Description |
+|---|---|
+| **Speech to Text** | Upload audio → get transcript with optional speaker labels |
+| **EMR Extraction** | Paste transcript → get structured medical JSON |
+
+## Models
+
+| Component | Model | Link |
+|---|---|---|
+| ASR | Whisper (Vietnamese fine-tuned, CTranslate2) | [lducc/MediVoice-ct2](https://huggingface.co/lducc/MediVoice-ct2) |
+| VAD | Silero VAD | Built into faster-whisper |
+| Diarization | Pyannote Speaker Diarization 3.1 | [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) |
+| LLM | Llama 3.3 70B (via Groq) | [Groq Console](https://console.groq.com) |
 
 ## Setup Guide
 
@@ -69,7 +91,7 @@ Create a `.env` file in the project root:
 GROQ_API_KEY=your_groq_key_here
 HF_TOKEN=your_huggingface_token_here
 CORS_ORIGINS=*
-HF_REPO_NAME=lducc/MediVoice
+HF_REPO_NAME=lducc/MediVoice-ct2
 LOCAL_DIR=./model-ct2
 ```
 
@@ -98,21 +120,6 @@ docker build -t medivoice .
 docker run --gpus all -p 7860:7860 --env-file .env medivoice
 ```
 
-## File Structure
-
-```
-MediVoice/
-├── audio.py                    # Audio loading utilities
-├── configs.py                  # Configuration and model download
-├── engines.py                  # Diarization and ASR engines
-├── llm.py                      # LLM-based EMR extraction
-├── main.py                     # FastAPI application
-├── Dockerfile                  # Container deployment
-├── .env                        # Environment variables (create this)
-├── requirements.txt            # Python dependencies
-└── README.md                   # This file
-```
-
 ## Usage
 
 ### Starting the Server
@@ -123,13 +130,30 @@ python main.py
 
 The server will start on `http://localhost:8000`
 
-### API Endpoints
+### Web Interface (Gradio)
+
+Open `http://localhost:8000` in your browser. You will see:
+
+**Tab 1 — Speech to Text**
+1. Upload an audio file (.wav, .mp3, .flac, .ogg)
+2. Optionally check "Enable Speaker Diarization" to identify speakers
+3. Click "Transcribe"
+4. View the full transcript and timestamped segments
+
+**Tab 2 — EMR Extraction**
+1. Paste a transcript into the text box
+2. Click "Extract Medical Data"
+3. View the structured JSON with patient info, symptoms, medications, etc.
+
+### REST API
+
+The API is available alongside the Gradio UI for programmatic access.
+
+API docs: `http://localhost:8000/docs`
 
 #### 1. Health Check
 
 **GET** `/ai/health`
-
-Check if all models are loaded correctly.
 
 ```bash
 curl http://localhost:8000/ai/health
@@ -147,8 +171,6 @@ Response:
 #### 2. Speech-to-Text
 
 **POST** `/ai/speech-to-text`
-
-Transcribe audio files to text with optional speaker diarization.
 
 **Parameters:**
 - `file`: Audio file (Supports: wav, mp3, flac, ogg, aiff)
@@ -171,8 +193,6 @@ curl -X POST "http://localhost:8000/ai/speech-to-text" \
 #### 3. Generate EMR Draft
 
 **POST** `/ai/generate-emr-draft`
-
-Extract structured medical data from transcription.
 
 **Request Body:**
 ```json
@@ -197,6 +217,21 @@ OR (with diarization):
     ]
   }
 }
+```
+
+## File Structure
+
+```
+MediVoice/
+├── audio.py              # Audio loading utilities
+├── configs.py            # Configuration and model download
+├── engines.py            # Diarization and ASR engines
+├── llm.py                # LLM-based EMR extraction
+├── main.py               # FastAPI + Gradio application
+├── Dockerfile            # Container deployment
+├── .env                  # Environment variables (create this)
+├── requirements.txt      # Python dependencies
+└── README.md             # This file
 ```
 
 ## Performance Tips
@@ -227,10 +262,3 @@ Lower it if you get OOM errors. Use diarization only when you need to identify s
 ### Issue: Slow transcription on CPU
 **Solution:**
 CPU processing is 5-10x slower than GPU. Consider using a GPU instance or processing smaller audio files.
-
-## Model Information
-
-- **ASR**: faster-whisper (Vietnamese fine-tuned, CTranslate2)
-- **VAD**: Silero VAD (built into faster-whisper)
-- **Diarization**: Pyannote Speaker Diarization 3.1
-- **LLM**: Llama 3.3 70B via Groq (for EMR extraction)
