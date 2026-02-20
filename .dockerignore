@@ -1,9 +1,12 @@
 .env
+.git
 __pycache__
-*.pyc
 model
 model-ct2
 benchmark.py
 convert_model.py
-temp.py
 sample_*
+*.pyc
+README.md
+.gitignore
+.dockerignore

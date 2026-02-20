@@ -2,13 +2,16 @@ import json
 from typing import Dict, Any
 from openai import OpenAI
 import configs
-from llm_confidence.logprobs_handler import LogprobsHandler 
 
-client = OpenAI(api_key = configs.OPENAI_KEY)
-logprobs_handler = LogprobsHandler()
+# Groq — OpenAI-compatible API, fast LPU inference
+client = OpenAI(
+    api_key=configs.GROQ_KEY,
+    base_url="https://api.groq.com/openai/v1"
+)
 
-def format_conversation(segments: list) -> str:
-    #Format diarized segments into a conversation
+MODEL = "llama-3.3-70b-versatile"
+
+def format_conversation(segments: list[dict]) -> str:
     if not segments:
         return ""
     
@@ -28,18 +31,16 @@ def format_conversation(segments: list) -> str:
         else:
             if current_speaker and current_text:
                 conversation.append(f"{current_speaker}: {' '.join(current_text)}")
-            
             current_speaker = speaker
             current_text = [text]
     
-    # Add final speaker
     if current_speaker and current_text:
         conversation.append(f"{current_speaker}: {' '.join(current_text)}")
     
     return "\n\n".join(conversation)
 
 
-def extract_medical_data(transcript: str = None, segments: list = None, lang: str = "vi") -> Dict[str, Any]:    
+def extract_medical_data(transcript: str = None, segments: list[dict] = None) -> Dict[str, Any]:    
     system_prompt = """
     Bạn là một nhân viên y khoa AI chuyên nghiệp tên là MediVoice.
     Nhiệm vụ của bạn là phân tích cuộc hội thoại khám bệnh và trích xuất thông tin y tế có cấu trúc.
@@ -80,50 +81,29 @@ def extract_medical_data(transcript: str = None, segments: list = None, lang: st
 
     try:
         if segments and len(segments) > 0:
-            conversation = format_conversation(segments)
-            input_text = conversation
-            source_type = "conversation"
-
+            input_text = format_conversation(segments)
         elif transcript:
             input_text = transcript
-            source_type = "transcript"
-            
         else:
             raise ValueError("Either transcript or segments must be provided")
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini", 
+            model=MODEL, 
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Transcript: \n\n{input_text}"}
             ],
-            response_format={"type": "json_object"}, 
             temperature=0.1, 
-            logprobs=True 
         )
         
-        content = response.choices[0].message.content
-        data = json.loads(content)
-
-        #Process confidence scores
-        if response.choices[0].logprobs:
-            raw_logprobs = response.choices[0].logprobs.content
-            logprobs_formatted = logprobs_handler.format_logprobs(raw_logprobs)
-            confidence_dict = logprobs_handler.process_logprobs(logprobs_formatted)
-            
-            #Calculate ovr confidence from all available scores
-            valid_scores = [v for v in confidence_dict.values() if isinstance(v, (int, float))]
-            overall = round(sum(valid_scores) / len(valid_scores), 4) if valid_scores else 0.0
-            
-            data["confidence"] = {
-                "overall": overall,
-                "by_token": confidence_dict  
-            }
-        else:
-            data["confidence"] = None
+        content = response.choices[0].message.content.strip()
         
-        # data["transcript"] = input_text
-        # data["source_type"] = source_type  # "conversation" or "transcript"
+        # Strip markdown code blocks if LLM wraps the JSON
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1]
+            content = content.rsplit("```", 1)[0].strip()
+        
+        data = json.loads(content)
         return data
         
     except Exception as e:

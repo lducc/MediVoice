@@ -1,11 +1,9 @@
-transformers>=4.48.0
-huggingface-hub>=0.27.0
-accelerate>=1.1.0
-peft>=0.14.0
+faster-whisper>=1.1.0
+ctranslate2>=4.5.0
+huggingface-hub
 
 librosa==0.11.0
 soundfile==0.13.1
-torchcodec==0.7.0
 numpy<2.0
 
 pyannote.audio==3.3.1
@@ -18,7 +16,7 @@ python-multipart
 python-dotenv
 openai
 
-llm-confidence==0.2.3
+
 jiwer
 evaluate
 tqdm

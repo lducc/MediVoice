@@ -4,31 +4,26 @@ MediVoice is a medical voice transcription system with speaker diarization and L
 
 ## Features
 
-- **Audio Transcription**: Converts audio to text using Whisper (Vietnamese language)
+- **Audio Transcription**: Converts audio to text using faster-whisper (Vietnamese language)
 - **Speaker Diarization**: Identifies and separates different speakers (doctor vs patient)
 - **EMR Extraction**: Automatically extracts structured medical data from conversations using LLM
-- **Fast Processing**: GPU-accelerated with batch processing
-- **Confidence Scores**: Provides confidence metrics based on log-probs for extracted data
+- **Fast Processing**: GPU-accelerated with batched inference (CTranslate2)
 
-
-##  Setup Guide
+## Setup Guide
 
 First, clone the repository and enter the directory:
 ```bash
 git clone https://github.com/lducc/MediVoice.git
 cd MediVoice
 ```
-### 1. Create Environment (Python 3.10.19)
 
-[](https://github.com/lducc/MediVoice#1-create-environment-python-31019)
-
+### 1. Create Environment (Python 3.10)
 
 **Option A: Using Conda**
 ```bash
 conda create -n medivoice python=3.10 -c conda-forge -y
 conda activate medivoice
 ```
-
 
 **Option B: Using Venv**
 ```bash
@@ -40,36 +35,41 @@ source .venv/bin/activate
 ```
 
 ---
+
 ### 2. Install Requirements
 
-
-> **GPU Note:**  The default command might install the CPU version of PyTorch. If you have an NVIDIA GPU (RTX 3050, etc.), run this  **before**  installing requirements:
+Install torch, torchvision and torchaudio:
+```bash
+pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 
+```
+> **GPU Note:** The default command might install the CPU version of PyTorch. If you have an NVIDIA GPU that supports CUDA 12.4, run this instead:
 ```bash
 pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 ```
-Install the dependencies:
+
+Install the remaining dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
 ---
+
 ### 3. Setup Configure
 
 Create a `.env` file in the project root:
 ```env
+GROQ_API_KEY=your_groq_key_here
 HF_TOKEN=your_huggingface_token_here
-OPENAI_API_KEY=your_openai_key_here
 CORS_ORIGINS=*
 HF_REPO_NAME=lducc/MediVoice
-LOCAL_DIR=./MediVoice
+LOCAL_DIR=./model-ct2
 ```
 
-
-#### OpenAI API Key (Required)
-1. Go to [OpenAI Platform](https://platform.openai.com/)
+#### Groq API Key (Required)
+1. Go to [Groq Console](https://console.groq.com/keys)
 2. Sign up or log in
-3. Navigate to API Keys section
-4. Create a new API key
-5. Copy and paste into `.env` file
+3. Create a new API key
+4. Copy and paste into `.env` file
 
 #### HuggingFace Token (Optional - for Diarization)
 1. Go to [HuggingFace](https://huggingface.co/)
@@ -79,19 +79,29 @@ LOCAL_DIR=./MediVoice
 5. Accept the terms for [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
 6. Copy and paste into `.env` file
 
->**Note:** Without HF_TOKEN, the system will work but speaker diarization will be disabled.
+> **Note:** Without HF_TOKEN, the system will work but speaker diarization will be disabled.
+
+---
+
+### 4. Run with Docker (Alternative)
+
+```bash
+docker build -t medivoice .
+docker run --gpus all -p 7860:7860 --env-file .env medivoice
+```
 
 ## File Structure
 
 ```
 MediVoice/
-├── audio.py                    # Audio processing and chunking
+├── audio.py                    # Audio loading utilities
 ├── configs.py                  # Configuration and model download
-├── engines.py                  # VAD, Diarization, and ASR engines
+├── engines.py                  # Diarization and ASR engines
 ├── llm.py                      # LLM-based EMR extraction
 ├── main.py                     # FastAPI application
+├── Dockerfile                  # Container deployment
 ├── .env                        # Environment variables (create this)
-├── requirements.txt            # Python dependencies (create this)
+├── requirements.txt            # Python dependencies
 └── README.md                   # This file
 ```
 
@@ -109,19 +119,18 @@ The server will start on `http://localhost:8000`
 
 #### 1. Health Check
 
-**GET** `/health`
+**GET** `/ai/health`
 
 Check if all models are loaded correctly.
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/ai/health
 ```
 
 Response:
 ```json
 {
   "status": "ok",
-  "vad": true,
   "asr": true,
   "diarization": true
 }
@@ -134,9 +143,8 @@ Response:
 Transcribe audio files to text with optional speaker diarization.
 
 **Parameters:**
-- `file`: Audio file (Supports: wav, mp3, flac, ogg) *(TODO: Add ffmpeg for other extensions support)*
-
- `enable_diarization`: Boolean (default: false)
+- `file`: Audio file (Supports: wav, mp3, flac, ogg, aiff)
+- `enable_diarization`: Boolean (default: false)
 
 **Without Diarization (Fast):**
 ```bash
@@ -192,12 +200,9 @@ The system automatically uses CUDA if available. Ensure you have:
 
 ### 2. Batch Size
 Adjust `BATCH_SIZE` in `configs.py` based on your GPU memory: 16 (default). 
-You could and should lower it down if OOM. Use diarization only when you need to identify speakers.
+Lower it if you get OOM errors. Use diarization only when you need to identify speakers.
 
 ## Troubleshooting
-
-### Issue: "OPENAI_API_KEY is required"
-**Solution:** Add your OpenAI API key to the `.env` file
 
 ### Issue: "Diarization pipeline doesn't exist"
 **Solution:** 
@@ -208,19 +213,16 @@ You could and should lower it down if OOM. Use diarization only when you need to
 ### Issue: CUDA out of memory
 **Solution:**
 1. Reduce `BATCH_SIZE` in `configs.py`
-2. Use CPU instead by setting `DEVICE = "cpu"` in `configs.py`
+2. Use CPU instead by setting `COMPUTE_TYPE=int8` in `.env`
 3. Process shorter audio segments
 
 ### Issue: Slow transcription on CPU
 **Solution:**
-This is expected. CPU processing is 5-10x slower than GPU. Consider:
-1. Using a GPU instance
-2. Processing smaller audio files
+CPU processing is 5-10x slower than GPU. Consider using a GPU instance or processing smaller audio files.
 
 ## Model Information
 
-- **ASR Model**: Whisper (Vietnamese fine-tuned)
-- **VAD Model**: Silero VAD
+- **ASR**: faster-whisper (Vietnamese fine-tuned, CTranslate2)
+- **VAD**: Silero VAD (built into faster-whisper)
 - **Diarization**: Pyannote Speaker Diarization 3.1
-- **LLM**: GPT-4o-mini (for EMR extraction)
-
+- **LLM**: Llama 3.3 70B via Groq (for EMR extraction)
